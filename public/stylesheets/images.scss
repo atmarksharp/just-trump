@@ -1,0 +1,27 @@
+$path: "../images/";
+$suit: ("s","c","h","d");
+$num: ("1","2","3","4","5","6","7","8","9","10","j","q","k");
+
+
+
+@for $s from 1 through 4 {
+  @for $n from 1 through 13 {
+
+##{nth($suit,$s)}-#{nth($num,$n)} {
+  background: url($path+"#{nth($suit,$s)}-#{nth($num,$n)}.gif");
+}
+
+ }
+}
+
+#j-1 {
+  background: url($path+"j-1.gif");
+}
+
+#j-2 {
+  background: url($path+"j-2.gif");
+}
+
+.ura {
+  background: url("../images/ura.gif") !important;
+}
