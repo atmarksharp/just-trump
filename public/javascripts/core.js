@@ -305,7 +305,7 @@
   });
 
   socket.on('message', function(data) {
-    var key, msg, s, target, user, _results;
+    var key, msg, pre, s, target, user, _results;
     msg = data.value;
     user = data.user;
     if (users[user.id] === void 0) {
@@ -321,7 +321,14 @@
     for (key in msg) {
       target = $(".card[data-id='" + key + "']");
       if (msg[key].reserved_by_sender) {
-        _results.push(target.css("top", msg[key].offset.top).removeClass("reserved").addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + user.id).redraw());
+        pre = target.data("pre-reserver");
+        target.css("top", msg[key].offset.top).removeClass("reserved").addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + user.id).redraw();
+        target.data("pre-reserver", "RID" + user.id);
+        if (pre !== "" && pre !== "RID" + user.id && target.hasClass(pre)) {
+          _results.push(target.removeClass(pre));
+        } else {
+          _results.push(void 0);
+        }
       } else if (msg[key].reserved_by !== void 0 && msg[key].reserved_by === computer_id) {
         _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved").redraw());
       } else if (msg[key].reserved_by !== void 0 && msg[key].reserved_by !== 0) {

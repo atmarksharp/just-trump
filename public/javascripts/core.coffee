@@ -286,6 +286,8 @@ socket.on('message', (data) ->
 
     # case1 : reserved by sender
     if msg[key].reserved_by_sender
+      pre = target.data("pre-reserver")
+
       target.css("top", msg[key].offset.top)
       .removeClass("reserved")
       .addClass("UID"+user.id)
@@ -295,6 +297,11 @@ socket.on('message', (data) ->
       .addClass("reserved-by-other")
       .addClass("RID"+user.id)
       .redraw()
+
+      target.data("pre-reserver","RID"+user.id)
+
+      if(pre isnt ""  && pre isnt "RID"+user.id && target.hasClass(pre))
+        target.removeClass(pre)
 
     # case2 : reserved by me
     else if msg[key].reserved_by isnt undefined && msg[key].reserved_by is computer_id

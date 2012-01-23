@@ -58,7 +58,6 @@ io.sockets.on('connection', function(socket) {
     console.log("message");
     dat.user = users[socket.id];
     dat.value = data;
-    socket.broadcast.emit('message', dat);
 
     for(key in data){
       if(!cards[key]) cards[key] = {};
@@ -75,6 +74,8 @@ io.sockets.on('connection', function(socket) {
         }
       }
     }
+
+    socket.broadcast.emit('message', dat);
   });
 
   socket.on('unselect', function(data) {
