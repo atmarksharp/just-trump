@@ -14,11 +14,11 @@ var app = module.exports = express.createServer();
 cards = {}
 
 // for(var i=0; i<4; i++){
-// 	for(var j=0; j<13; j++){
-// 		cards[suits[i]+"-"+nums[j]] = {
-// 			
-// 		};
-// 	}
+//   for(var j=0; j<13; j++){
+//     cards[suits[i]+"-"+nums[j]] = {
+//
+//     };
+//   }
 // }
 
 app.configure(function(){
@@ -31,11 +31,11 @@ app.configure(function(){
 });
 
 app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
 app.configure('production', function(){
-  app.use(express.errorHandler()); 
+  app.use(express.errorHandler());
 });
 
 app.get('/', routes.index);
@@ -50,29 +50,29 @@ var socketIO = require('socket.io');
 var io = socketIO.listen(app);
 
 io.sockets.on('connection', function(socket) {
-	socket.emit("init",cards);
-	
+  socket.emit("init",cards);
+
   console.log("connection");
 
   socket.on('message', function(data) {
     console.log("message");
     socket.broadcast.emit('message', data);
 
-	for(key in data){
-		if(!cards[key]) cards[key] = {};
-		cards[key]["offset"] = data[key]["offset"];
-		cards[key]["z_index"] = data[key]["z_index"];
-		cards[key]["face"] = data[key]["face"];
-	}
+    for(key in data){
+      if(!cards[key]) cards[key] = {};
+      cards[key].offset = data[key]["offset"];
+      cards[key].z_index = data[key]["z_index"];
+      cards[key].face = data[key]["face"];
+    }
   });
 
   socket.on('shuffle', function(data) {
     console.log("shuffle");
     socket.broadcast.emit('shuffle', data);
 
-	for(key in data){
-		if(!cards[key]) cards[key] = {};
-		cards[key].visual = data[key]["visual"];
-	}
+    for(key in data){
+      if(!cards[key]) cards[key] = {};
+      cards[key].visual = data[key]["visual"];
+    }
   });
 });

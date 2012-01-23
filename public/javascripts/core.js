@@ -175,6 +175,9 @@
           return $(this).css("left", (startPoints[$(this).name()].left + leftDistance) + "px");
         });
         return send();
+      },
+      stop: function(e, ui) {
+        return send();
       }
     }).each(function() {
       zIndex += 1;
@@ -266,10 +269,10 @@
     _results = [];
     for (key in msg) {
       target = $(".card[data-id='" + key + "']");
-      if (msg[key].face) {
+      if (!(msg[key].face === void 0) && !(msg[key].offset === void 0) && !(msg[key].z_index === void 0)) {
         target.css("top", msg[key].offset.top).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face);
       }
-      if (msg[key].visual) {
+      if (!(msg[key].visual === void 0)) {
         to = msg[key].visual.split("-");
         target.data("suit", to[0]).data("num", to[1]);
       }
