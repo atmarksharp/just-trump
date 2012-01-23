@@ -69,6 +69,25 @@ $(document).ready ->
 
       i+=1
     )
+  resque = ->
+    i=0
+    max = 0
+    $(".card").each ->
+      if max < $(this).offset().left
+        max = $(this).offset().left
+
+      if $(this).offset().left < 50
+        $(this).css "left", 50
+      else if $(this).offset().left > window.innerWidth - 50
+        $(this).css "left", window.innerWidth - 100
+      else if $(this).offset().top < 50
+        $(this).css "top", 50
+      else if $(this).offset().top > window.innerHeight - 50
+        $(this).css "top", window.innerHeight - 100
+
+      i += 1
+
+    console.log "max = #{max}"
   reserve = ->
     i=0
     $.each(selected, ->
@@ -250,6 +269,9 @@ $(document).ready ->
       send()
     else if e.which == char("l")
       unreserve()
+      send()
+    else if e.which == char("r")
+      resque()
       send()
 
   ).keydown((e) ->

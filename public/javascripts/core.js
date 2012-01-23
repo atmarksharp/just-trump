@@ -30,7 +30,7 @@
   };
 
   $(document).ready(function() {
-    var arrange, char, divide, gather, i, j, reserve, send, shuffle, startPoints, unreserve, unselect_all;
+    var arrange, char, divide, gather, i, j, reserve, resque, send, shuffle, startPoints, unreserve, unselect_all;
     char = function(s) {
       return s.charCodeAt(0);
     };
@@ -95,6 +95,25 @@
         $(this).css("left", selected[0].offset().left - i * 0.3 + "px");
         return i += 1;
       });
+    };
+    resque = function() {
+      var i, max;
+      i = 0;
+      max = 0;
+      $(".card").each(function() {
+        if (max < $(this).offset().left) max = $(this).offset().left;
+        if ($(this).offset().left < 50) {
+          $(this).css("left", 50);
+        } else if ($(this).offset().left > window.innerWidth - 50) {
+          $(this).css("left", window.innerWidth - 100);
+        } else if ($(this).offset().top < 50) {
+          $(this).css("top", 50);
+        } else if ($(this).offset().top > window.innerHeight - 50) {
+          $(this).css("top", window.innerHeight - 100);
+        }
+        return i += 1;
+      });
+      return console.log("max = " + max);
     };
     reserve = function() {
       var i;
@@ -285,6 +304,9 @@
         return send();
       } else if (e.which === char("l")) {
         unreserve();
+        return send();
+      } else if (e.which === char("r")) {
+        resque();
         return send();
       }
     }).keydown(function(e) {
