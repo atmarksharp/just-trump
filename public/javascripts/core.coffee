@@ -284,6 +284,7 @@ socket.on('message', (data) ->
   for key of msg
     target = $(".card[data-id='#{key}']")
 
+    # case1 : reserved by sender
     if msg[key].reserved_by_sender
       target.css("top", msg[key].offset.top)
       .removeClass("reserved")
@@ -294,7 +295,19 @@ socket.on('message', (data) ->
       .addClass("reserved-by-other")
       .addClass("RID"+user.id)
       .redraw()
-    else if msg[key].reserved_by !== undefined && msg[key].reserved_by != 0
+
+    # case2 : reserved by me
+    else if msg[key].reserved_by isnt undefined && msg[key].reserved_by is computer_id
+      target.css("top", msg[key].offset.top)
+      .addClass("UID"+user.id)
+      .css("left", msg[key].offset.left)
+      .css("z-index", msg[key].z_index)
+      .data("face",msg[key].face)
+      .addClass("reserved")
+      .redraw()
+
+    # case3 : reserved by other
+    else if msg[key].reserved_by isnt undefined && msg[key].reserved_by isnt 0
       target.css("top", msg[key].offset.top)
       .addClass("UID"+user.id)
       .css("left", msg[key].offset.left)
@@ -303,6 +316,8 @@ socket.on('message', (data) ->
       .addClass("reserved-by-other")
       .addClass("RID"+msg[key].reserved_by)
       .redraw()
+
+    # case4 : no one reserved
     else
       target.css("top", msg[key].offset.top)
       .addClass("UID"+user.id)

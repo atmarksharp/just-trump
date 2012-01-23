@@ -322,6 +322,10 @@
       target = $(".card[data-id='" + key + "']");
       if (msg[key].reserved_by_sender) {
         _results.push(target.css("top", msg[key].offset.top).removeClass("reserved").addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + user.id).redraw());
+      } else if (msg[key].reserved_by !== void 0 && msg[key].reserved_by === computer_id) {
+        _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved").redraw());
+      } else if (msg[key].reserved_by !== void 0 && msg[key].reserved_by !== 0) {
+        _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + msg[key].reserved_by).redraw());
       } else {
         _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).removeClass("reserved-by-other").removeClass("RID" + user.id).redraw());
       }
