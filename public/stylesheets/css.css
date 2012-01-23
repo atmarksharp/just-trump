@@ -24,6 +24,11 @@ body {
 }
 
 #loading {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 40px;
+  width: 100%;
   padding: 10px;
 }
 
@@ -35,6 +40,10 @@ body {
   left: 300px;
   z-index: 10;
   list-style: none;
+}
+
+.reserved {
+  border: 3px solid black;
 }
 
 .selected_card{

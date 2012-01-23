@@ -1,5 +1,5 @@
 (function() {
-  var CARD_NUM, SHIFT, multi_select, nums, selected, shuffled, socket, suits, zIndex;
+  var CARD_NUM, SHIFT, color, computer_id, multi_select, nums, selected, shuffled, socket, suits, users, zIndex;
 
   SHIFT = 16;
 
@@ -19,8 +19,18 @@
 
   shuffled = {};
 
+  computer_id = parseInt(Math.random() * 10e13);
+
+  users = {};
+
+  color = {
+    h: parseInt(Math.random() * 360),
+    s: 100,
+    b: 50
+  };
+
   $(document).ready(function() {
-    var arrange, char, divide, gather, i, j, send, shuffle, startPoints;
+    var arrange, char, divide, gather, i, j, reserve, send, shuffle, startPoints, unreserve, unselect_all;
     char = function(s) {
       return s.charCodeAt(0);
     };
@@ -31,10 +41,22 @@
         return msg[$(this).data("id")] = {
           offset: $(this).offset(),
           z_index: $(this).css("z-index"),
-          face: $(this).face()
+          face: $(this).face(),
+          reserved: $(this).hasClass("reserved")
         };
       });
       return socket.emit('message', msg);
+    };
+    unselect_all = function() {
+      var unselected;
+      unselected = {};
+      $.each(selected, function() {
+        $(this).removeClass("selected_card");
+        $(this).redraw();
+        return unselected[$(this).data("id")] = "";
+      });
+      selected = [];
+      return socket.emit("unselect", unselected);
     };
     shuffle = function() {
       var i, j, n1, n2, s1, s2;
@@ -68,6 +90,22 @@
       return $.each(selected, function() {
         $(this).css("top", selected[0].offset().top - i * 0.3 + "px");
         $(this).css("left", selected[0].offset().left - i * 0.3 + "px");
+        return i += 1;
+      });
+    };
+    reserve = function() {
+      var i;
+      i = 0;
+      return $.each(selected, function() {
+        $(this).removeClass("reserved-by-other").addClass("reserved").redraw();
+        return i += 1;
+      });
+    };
+    unreserve = function() {
+      var i;
+      i = 0;
+      return $.each(selected, function() {
+        $(this).removeClass("reserved").redraw();
         return i += 1;
       });
     };
@@ -124,20 +162,30 @@
       redraw: function() {
         $(this).attr("id", $(this).name());
         if ($(this).face() === 0) {
+          $(this).removeClass("semi-open");
           return $(this).addClass("ura");
         } else {
-          return $(this).removeClass("ura");
+          if ($(this).hasClass("reserved-by-other")) {
+            $(this).removeClass("ura");
+            return $(this).addClass("semi-open");
+          } else {
+            $(this).removeClass("semi-open");
+            return $(this).removeClass("ura");
+          }
         }
       },
       flip: function() {
+        if ($(this).hasClass("reserved-by-other")) return;
         $(this).data("face", 1 - $(this).data("face"));
         return $(this).redraw();
       },
       open: function() {
+        if ($(this).hasClass("reserved-by-other")) return;
         $(this).data("face", 1);
         return $(this).redraw();
       },
       close: function() {
+        if ($(this).hasClass("reserved-by-other")) return;
         $(this).data("face", 0);
         return $(this).redraw();
       }
@@ -148,11 +196,11 @@
         selected.push($(ui.selected));
         zIndex += CARD_NUM;
         $(ui.selected).css("z-index", zIndex);
+        send();
         return true;
       },
       start: function(e, ui) {
-        $(".selected_card").removeClass("selected_card");
-        selected = [];
+        unselect_all();
         return true;
       }
     });
@@ -190,12 +238,13 @@
       if (multi_select) {
         selected.push($(this));
       } else if (selected.length === 0 || !$(this).hasClass("selected_card")) {
-        $(".selected_card").removeClass("selected_card");
+        unselect_all();
         selected = [$(this)];
       }
       $(this).addClass("selected_card");
       zIndex += CARD_NUM;
       $(this).css("z-index", zIndex);
+      send();
       return false;
     }).mouseup(function() {});
     $("body").keypress(function(e) {
@@ -225,6 +274,15 @@
       } else if (e.which === char("j")) {
         divide();
         return send();
+      } else if (e.which === char("j")) {
+        divide();
+        return send();
+      } else if (e.which === char("k")) {
+        reserve();
+        return send();
+      } else if (e.which === char("l")) {
+        unreserve();
+        return send();
       }
     }).keydown(function(e) {
       if (e.keyCode === SHIFT) multi_select = true;
@@ -232,30 +290,59 @@
     }).keyup(function(e) {
       return multi_select = false;
     }).mousedown(function() {
-      $.each(selected, function() {
-        $(this).removeClass("selected_card");
-        return $(this).redraw();
-      });
-      return selected = [];
+      return unselect_all();
     });
     gather();
     return selected = [];
   });
 
-  socket.on('connect', function(msg) {});
+  socket.on('connect', function(msg) {
+    return socket.emit('add_user', {
+      id: computer_id,
+      color: color,
+      name: "guest"
+    });
+  });
 
-  socket.on('message', function(msg) {
-    var key, _results;
+  socket.on('message', function(data) {
+    var key, msg, s, target, user, _results;
+    msg = data.value;
+    user = data.user;
+    if (users[user.id] === void 0) {
+      users[user.id] = {
+        name: user.name,
+        color: user.color
+      };
+      s = document.styleSheets[0];
+      s.insertRule(".UID" + user.id + " { box-shadow: 0px 0px 10px hsl(" + user.color.h + "," + user.color.s + "%," + user.color.b + "%); }", s.cssRules.length);
+      s.insertRule(".reserved-by-other.RID" + user.id + " { border: 3px solid hsl(" + user.color.h + "," + user.color.s + "%," + user.color.b + "%); }", s.cssRules.length);
+    }
     _results = [];
     for (key in msg) {
-      _results.push($(".card[data-id='" + key + "']").css("top", msg[key].offset.top).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).redraw());
+      target = $(".card[data-id='" + key + "']");
+      if (msg[key].reserved) {
+        _results.push(target.css("top", msg[key].offset.top).removeClass("reserved").addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + user.id).redraw());
+      } else {
+        _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).removeClass("reserved-by-other").removeClass("RID" + user.id).redraw());
+      }
     }
     return _results;
   });
 
-  socket.on('shuffle', function(msg) {
-    var key, to, _results;
-    console.log("shuffle!");
+  socket.on('unselect', function(data) {
+    var key, msg, user, _results;
+    msg = data.value;
+    user = data.user;
+    _results = [];
+    for (key in msg) {
+      _results.push($(".card[data-id='" + key + "']").removeClass("UID" + user.id));
+    }
+    return _results;
+  });
+
+  socket.on('shuffle', function(data) {
+    var key, msg, to, _results;
+    msg = data.value;
     _results = [];
     for (key in msg) {
       to = msg[key].visual.split("-");
@@ -264,8 +351,34 @@
     return _results;
   });
 
-  socket.on('init', function(msg) {
-    var key, target, to, _results;
+  socket.on('new_user_entry', function(data) {
+    var user;
+    user = data.user;
+    return $("#loading").text("" + data.user.name + " was entered.").slideDown(1000).slideUp(500);
+  });
+
+  socket.on('user_disconnect', function(data) {
+    var user;
+    user = data.user;
+    $("#loading").text("" + data.user.name + " was disconnected.").slideDown(1000).slideUp(500);
+    $(".UID" + user.id).removeClass("UID" + user.id).redraw();
+    return $(".RID" + user.id).removeClass("RID" + user.id).removeClass("reserved-by-other").data("face", 0).redraw();
+  });
+
+  socket.on('init', function(data) {
+    var key, msg, s, target, to, user, _results, _users;
+    msg = data.value;
+    _users = data.users;
+    s = document.styleSheets[0];
+    for (key in _users) {
+      user = _users[key];
+      users[user.id] = {
+        name: user.name,
+        color: user.color
+      };
+      s.insertRule(".UID" + user.id + " { box-shadow: 0px 0px 10px hsl(" + user.color.h + "," + user.color.s + "%," + user.color.b + "%); }", s.cssRules.length);
+      s.insertRule(".reserved-by-other.RID" + user.id + " { border: 3px solid hsl(" + user.color.h + "," + user.color.s + "%," + user.color.b + "%); }", s.cssRules.length);
+    }
     $("#loading").fadeOut(500);
     $("#back").css("display", "block");
     _results = [];
@@ -277,6 +390,10 @@
       if (!(msg[key].visual === void 0)) {
         to = msg[key].visual.split("-");
         target.data("suit", to[0]).data("num", to[1]);
+      }
+      if (!(msg[key].reserved_by === void 0) && msg[key].reserved_by !== 0) {
+        console.log(msg[key].reserved_by);
+        target.addClass("reserved-by-other").addClass("RID" + msg[key].reserved_by);
       }
       _results.push(target.redraw());
     }

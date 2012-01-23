@@ -8,6 +8,10 @@ zIndex = 10
 socket = io.connect(window.location.href)
 shuffled = {}
 
+computer_id = parseInt(Math.random()*10e13)
+users = {}
+color = {h:parseInt(Math.random()*360), s:100, b:50}
+
 $(document).ready ->
 
   char = (s) -> s.charCodeAt 0
@@ -19,9 +23,19 @@ $(document).ready ->
         offset: $(this).offset(),
         z_index: $(this).css("z-index"),
         face: $(this).face(),
+        reserved: $(this).hasClass("reserved")
       }
     )
     socket.emit('message',msg)
+
+  unselect_all = ->
+    unselected = {}
+    $.each selected, ->
+      $(this).removeClass "selected_card"
+      $(this).redraw()
+      unselected[$(this).data("id")] = ""
+    selected = []
+    socket.emit("unselect", unselected)
 
   shuffle = ->
     shuffled = {}
@@ -51,6 +65,21 @@ $(document).ready ->
     $.each(selected, ->
       $(this).css("top", selected[0].offset().top-i*0.3+"px")
       $(this).css("left", selected[0].offset().left-i*0.3+"px")
+
+      i+=1
+    )
+  reserve = ->
+    i=0
+    $.each(selected, ->
+      $(this).removeClass("reserved-by-other")
+       .addClass("reserved").redraw()
+
+      i+=1
+    )
+  unreserve = ->
+    i=0
+    $.each(selected, ->
+      $(this).removeClass("reserved").redraw()
 
       i+=1
     )
@@ -95,18 +124,31 @@ $(document).ready ->
         "ura"
     redraw: ->
       $(this).attr("id",$(this).name())
+
       if $(this).face() == 0
+        $(this).removeClass("semi-open")
         $(this).addClass("ura")
       else
-        $(this).removeClass("ura")
+        if $(this).hasClass("reserved-by-other")
+          $(this).removeClass("ura")
+          $(this).addClass("semi-open")
+        else
+          $(this).removeClass("semi-open")
+          $(this).removeClass("ura")
       #$(this).css "background-image", "url('./images/" + $(this).img() + ".gif')"
     flip: ->
+      if $(this).hasClass("reserved-by-other")
+        return
       $(this).data "face", 1 - $(this).data("face")
       $(this).redraw()
     open: ->
+      if $(this).hasClass("reserved-by-other")
+        return
       $(this).data "face", 1
       $(this).redraw()
     close: ->
+      if $(this).hasClass("reserved-by-other")
+        return
       $(this).data "face", 0
       $(this).redraw()
   });
@@ -117,10 +159,10 @@ $(document).ready ->
       selected.push($(ui.selected))
       zIndex += CARD_NUM
       $(ui.selected).css("z-index", zIndex)
+      send()
       true
     start: (e, ui) ->
-      $(".selected_card").removeClass "selected_card"
-      selected = [];
+      unselect_all()
       true
   )
 
@@ -164,12 +206,13 @@ $(document).ready ->
     if multi_select
       selected.push $(this)
     else if selected.length == 0 or !$(this).hasClass("selected_card")
-      $(".selected_card").removeClass("selected_card")
+      unselect_all()
       selected = [ $(this) ]
 
     $(this).addClass "selected_card"
     zIndex += CARD_NUM
     $(this).css("z-index", zIndex)
+    send()
     false
 
   ).mouseup( ->
@@ -198,6 +241,15 @@ $(document).ready ->
     else if e.which == char("j")
       divide()
       send()
+    else if e.which == char("j")
+      divide()
+      send()
+    else if e.which == char("k")
+      reserve()
+      send()
+    else if e.which == char("l")
+      unreserve()
+      send()
 
   ).keydown((e) ->
 
@@ -209,31 +261,62 @@ $(document).ready ->
     multi_select = false
 
   ).mousedown( ->
-    $.each selected, ->
-      $(this).removeClass "selected_card"
-      $(this).redraw()
-    selected = []
+    unselect_all()
   )
 
   gather()
   selected = []
 
 socket.on('connect', (msg) ->
-
+  socket.emit('add_user', {id:computer_id, color:color, name:"guest"})
 )
 
-socket.on('message', (msg) ->
+socket.on('message', (data) ->
+  msg = data.value
+  user = data.user
+
+  if users[user.id] is undefined
+    users[user.id] = {name: user.name, color: user.color}
+    s = document.styleSheets[0]
+    s.insertRule(".UID#{user.id} { box-shadow: 0px 0px 10px hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+    s.insertRule(".reserved-by-other.RID#{user.id} { border: 3px solid hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+
   for key of msg
-    $(".card[data-id='#{key}']").css("top", msg[key].offset.top)
-    .css("left", msg[key].offset.left)
-    .css("z-index", msg[key].z_index)
-    .data("face",msg[key].face)
-    .redraw()
+    target = $(".card[data-id='#{key}']")
+
+    if msg[key].reserved
+      target.css("top", msg[key].offset.top)
+      .removeClass("reserved")
+      .addClass("UID"+user.id)
+      .css("left", msg[key].offset.left)
+      .css("z-index", msg[key].z_index)
+      .data("face",msg[key].face)
+      .addClass("reserved-by-other")
+      .addClass("RID"+user.id)
+      .redraw()
+    else
+      target.css("top", msg[key].offset.top)
+      .addClass("UID"+user.id)
+      .css("left", msg[key].offset.left)
+      .css("z-index", msg[key].z_index)
+      .data("face",msg[key].face)
+      .removeClass("reserved-by-other")
+      .removeClass("RID"+user.id)
+      .redraw()
 
 )
 
-socket.on('shuffle', (msg)->
-  console.log "shuffle!"
+socket.on('unselect', (data) ->
+  msg = data.value
+  user = data.user
+
+  for key of msg
+    $(".card[data-id='#{key}']").removeClass("UID"+user.id)
+
+)
+
+socket.on('shuffle', (data)->
+  msg = data.value
 
   for key of msg
     to = msg[key].visual.split("-")
@@ -242,13 +325,41 @@ socket.on('shuffle', (msg)->
     .redraw()
 )
 
-socket.on('init', (msg)->
+socket.on('new_user_entry', (data)->
+  user = data.user
+  $("#loading").text("#{data.user.name} was entered.").slideDown(1000).slideUp(500);
+
+  # s = document.styleSheets[0]
+  #   s.insertRule(".UID#{user.id} { box-shadow: 0px 0px 10px hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+  #   s.insertRule(".RID#{user.id} { border: 3px solid hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+)
+
+socket.on('user_disconnect', (data)->
+  user = data.user
+  $("#loading").text("#{data.user.name} was disconnected.").slideDown(1000).slideUp(500);
+
+  $(".UID#{user.id}").removeClass("UID#{user.id}").redraw()
+  $(".RID#{user.id}").removeClass("RID#{user.id}").removeClass("reserved-by-other").data("face", 0).redraw()
+)
+
+
+socket.on('init', (data)->
+  msg = data.value
+  _users = data.users
+
+  s = document.styleSheets[0]
+
+  for key of _users
+    user = _users[key]
+    users[user.id] = {name: user.name, color: user.color}
+    s.insertRule(".UID#{user.id} { box-shadow: 0px 0px 10px hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+    s.insertRule(".reserved-by-other.RID#{user.id} { border: 3px solid hsl(#{user.color.h},#{user.color.s}%,#{user.color.b}%); }",s.cssRules.length)
+
   $("#loading").fadeOut 500
   $("#back").css("display","block")
 
   for key of msg
     target = $(".card[data-id='#{key}']")
-
 
     if !(msg[key].face is undefined) and !(msg[key].offset is undefined) and !(msg[key].z_index is undefined)
       target.css("top", msg[key].offset.top)
@@ -260,6 +371,10 @@ socket.on('init', (msg)->
       to = msg[key].visual.split("-")
       target.data("suit", to[0])
       .data("num", to[1])
+
+    if !(msg[key].reserved_by is undefined) and msg[key].reserved_by != 0
+      console.log(msg[key].reserved_by)
+      target.addClass("reserved-by-other").addClass("RID"+msg[key].reserved_by)
 
     target.redraw()
 

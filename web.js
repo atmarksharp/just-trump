@@ -12,14 +12,7 @@ var express = require('express')
 var app = module.exports = express.createServer();
 
 cards = {}
-
-// for(var i=0; i<4; i++){
-//   for(var j=0; j<13; j++){
-//     cards[suits[i]+"-"+nums[j]] = {
-//
-//     };
-//   }
-// }
+users = {}
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -50,29 +43,73 @@ var socketIO = require('socket.io');
 var io = socketIO.listen(app);
 
 io.sockets.on('connection', function(socket) {
-  socket.emit("init",cards);
 
   console.log("connection");
 
   socket.on('message', function(data) {
+    var dat = {}
     console.log("message");
-    socket.broadcast.emit('message', data);
+    dat.user = users[socket.id];
+    dat.value = data;
+    socket.broadcast.emit('message', dat);
 
     for(key in data){
       if(!cards[key]) cards[key] = {};
       cards[key].offset = data[key]["offset"];
       cards[key].z_index = data[key]["z_index"];
       cards[key].face = data[key]["face"];
+      if(data[key]["reserved"]){
+        console.log("RESERVED !!!!!!!")
+        cards[key].reserved_by = users[socket.id].id;
+      }else{
+        if(cards[key].reserved_by == users[socket.id].id){
+          console.log("RESERVED CANCELED !!!!!!!")
+          cards[key].reserved_by = 0
+        }
+      }
     }
+  });
+
+  socket.on('unselect', function(data) {
+    var dat = {}
+    dat.user = users[socket.id];
+    dat.value = data;
+    socket.broadcast.emit('unselect', dat)
+  });
+
+  socket.on('add_user', function(data) {
+    console.log("connection ID is " + data.id + ", bonded to " + socket.id);
+    users[socket.id] = data;
+    socket.emit("init", {users: users, value: cards});
+    socket.broadcast.emit('new_user_entry', {user: data});
   });
 
   socket.on('shuffle', function(data) {
     console.log("shuffle");
-    socket.broadcast.emit('shuffle', data);
+    socket.broadcast.emit('shuffle', {value: data});
 
     for(key in data){
       if(!cards[key]) cards[key] = {};
       cards[key].visual = data[key]["visual"];
     }
+  });
+
+  socket.on('disconnect', function () {
+    if(!users[socket.id]){
+      return;
+    }
+    console.log("connection ID: " + users[socket.id].id + " was disconnected");
+
+    for(card in cards){
+      if(cards[key].reserved_by == users[socket.id]){
+        cards[key].reserved_by = 0
+      }
+    }
+
+    var dat = {}
+    dat.user = users[socket.id];
+    socket.broadcast.emit('user_disconnect', dat)
+
+    delete users[socket.id];
   });
 });
