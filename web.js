@@ -11,6 +11,7 @@ var express = require('express')
 
 var app = module.exports = express.createServer();
 
+connections = 0;
 cards = {};
 users = {};
 current_zIndex = 64;
@@ -46,6 +47,7 @@ var io = socketIO.listen(app);
 io.sockets.on('connection', function(socket) {
 
   console.log("connection");
+  connections++;
 
   socket.on('message', function(data) {
 
@@ -130,5 +132,33 @@ io.sockets.on('connection', function(socket) {
     socket.broadcast.emit('user_disconnect', dat)
 
     delete users[socket.id];
+
+    connections--;
+    console.log("connections: " + connections);
+
+    if(connections==0){
+      current_zIndex = 0;
+      i = 0;
+      min = 0;
+      for(key in cards){
+        if(i==0 && cards[key].z_index !== undefined){
+          min = cards[key].z_index;
+          i++;
+        }else if(cards[key].z_index !== undefined){
+          if(min>cards[key].z_index){
+            min = cards[key].z_index;
+          }
+        }
+      }
+
+      current_zIndex -= min
+
+      for(key in cards){
+        if(cards[key].z_index !== undefined){
+          cards[key].z_index -= min
+        }
+      }
+
+    }
   });
 });
