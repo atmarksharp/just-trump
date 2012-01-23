@@ -243,6 +243,9 @@ socket.on('shuffle', (msg)->
 )
 
 socket.on('init', (msg)->
+  $("#loading").fadeOut 500
+  $("#back").css("display","block")
+
   for key of msg
     target = $(".card[data-id='#{key}']")
 

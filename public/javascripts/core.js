@@ -266,6 +266,8 @@
 
   socket.on('init', function(msg) {
     var key, target, to, _results;
+    $("#loading").fadeOut(500);
+    $("#back").css("display", "block");
     _results = [];
     for (key in msg) {
       target = $(".card[data-id='" + key + "']");
