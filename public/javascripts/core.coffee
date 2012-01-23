@@ -155,10 +155,10 @@ $(document).ready ->
 
   $("#back").selectable(
     selected: (e, ui) ->
-      $(ui.selected).addClass("selected_card").redraw()
-      selected.push($(ui.selected))
       zIndex += CARD_NUM
       $(ui.selected).css("z-index", zIndex)
+      $(ui.selected).addClass("selected_card").redraw()
+      selected.push($(ui.selected))
       send()
       true
     start: (e, ui) ->
