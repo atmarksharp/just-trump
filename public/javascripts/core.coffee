@@ -14,6 +14,17 @@ color = {h:parseInt(Math.random()*360), s:100, b:50}
 
 $(document).ready ->
 
+  $("#left-tab").mouseenter ->
+      $(this).animate({"margin-left":0}, 1000,"easeOutQuart")
+    .mouseleave ->
+      $(this).delay(400).animate({"margin-left":-135}, 500)
+      false
+  $("#right-tab").mouseenter ->
+      $(this).animate({"margin-left":-155}, 1000,"easeOutQuart")
+    .mouseleave ->
+      $(this).delay(400).animate({"margin-left":-25}, 500)
+      false
+
   char = (s) -> s.charCodeAt 0
   send = ->
     msg = {}

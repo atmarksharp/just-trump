@@ -29,6 +29,20 @@ body {
   padding: 10px;
 }
 
+#left-tab {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  margin-left: -135px;
+}
+
+#right-tab {
+  position: fixed;
+  top: 30px;
+  left: 100%;
+  margin-left: -25px;
+}
+
 .card{
   width: 48px;
   height: 65px;

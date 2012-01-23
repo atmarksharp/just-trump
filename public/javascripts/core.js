@@ -31,6 +31,26 @@
 
   $(document).ready(function() {
     var arrange, char, divide, gather, i, j, reserve, resque, send, shuffle, startPoints, unreserve, unselect_all;
+    $("#left-tab").mouseenter(function() {
+      return $(this).animate({
+        "margin-left": 0
+      }, 1000, "easeOutQuart");
+    }).mouseleave(function() {
+      $(this).delay(400).animate({
+        "margin-left": -135
+      }, 500);
+      return false;
+    });
+    $("#right-tab").mouseenter(function() {
+      return $(this).animate({
+        "margin-left": -155
+      }, 1000, "easeOutQuart");
+    }).mouseleave(function() {
+      $(this).delay(400).animate({
+        "margin-left": -25
+      }, 500);
+      return false;
+    });
     char = function(s) {
       return s.charCodeAt(0);
     };
