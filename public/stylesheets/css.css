@@ -49,5 +49,5 @@ body {
 
 .ui-selectable-helper{
   position: absolute;
-  border: 1px dotted #000;
+  border: 1px dotted #AAA;
 }
