@@ -381,6 +381,8 @@
     msg = data.value;
     _users = data.users;
     s = document.styleSheets[0];
+    s.insertRule(".selected_card { box-shadow: 0px 0px 10px hsl(" + color.h + "," + color.s + "%," + color.b + "%) !important; }", s.cssRules.length);
+    s.insertRule(".reserved { border: 3px solid hsl(" + color.h + "," + color.s + "%," + color.b + "%) !important; }", s.cssRules.length);
     for (key in _users) {
       user = _users[key];
       users[user.id] = {

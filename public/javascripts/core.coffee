@@ -380,6 +380,10 @@ socket.on('init', (data)->
 
   s = document.styleSheets[0]
 
+  s.insertRule(".selected_card { box-shadow: 0px 0px 10px hsl(#{color.h},#{color.s}%,#{color.b}%) !important; }",s.cssRules.length)
+  s.insertRule(".reserved { border: 3px solid hsl(#{color.h},#{color.s}%,#{color.b}%) !important; }",s.cssRules.length)
+
+
   for key of _users
     user = _users[key]
     users[user.id] = {name: user.name, color: user.color}
