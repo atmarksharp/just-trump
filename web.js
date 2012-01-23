@@ -47,6 +47,13 @@ io.sockets.on('connection', function(socket) {
   console.log("connection");
 
   socket.on('message', function(data) {
+
+    for(key in data){
+      if(cards[key] !== undefined && cards[key].reserved_by !== undefined && cards[key].reserved_by != 0){
+        data[key].reserved_by = cards[key].reserved_by
+      }
+    }
+
     var dat = {}
     console.log("message");
     dat.user = users[socket.id];
@@ -58,13 +65,13 @@ io.sockets.on('connection', function(socket) {
       cards[key].offset = data[key]["offset"];
       cards[key].z_index = data[key]["z_index"];
       cards[key].face = data[key]["face"];
-      if(data[key]["reserved"]){
-        console.log("RESERVED !!!!!!!")
+      if(data[key]["reserved_by_sender"]){
+        console.log("RESERVED !!!!!!!");
         cards[key].reserved_by = users[socket.id].id;
       }else{
-        if(cards[key].reserved_by == users[socket.id].id){
-          console.log("RESERVED CANCELED !!!!!!!")
-          cards[key].reserved_by = 0
+        if(cards[key].reserved_by !== undefined &&  cards[key].reserved_by == users[socket.id].id){
+          console.log("RESERVED CANCELED !!!!!!!");
+          cards[key].reserved_by = 0;
         }
       }
     }
@@ -100,9 +107,11 @@ io.sockets.on('connection', function(socket) {
     }
     console.log("connection ID: " + users[socket.id].id + " was disconnected");
 
-    for(card in cards){
-      if(cards[key].reserved_by == users[socket.id]){
-        cards[key].reserved_by = 0
+    for(key in cards){
+      if(cards[key].reserved_by !== undefined && cards[key].reserved_by == users[socket.id].id){
+        cards[key].reserved_by = 0;
+        cards[key].face = 0;
+        console.log("card.reserved_by cleared");
       }
     }
 

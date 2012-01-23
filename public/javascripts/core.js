@@ -42,7 +42,7 @@
           offset: $(this).offset(),
           z_index: $(this).css("z-index"),
           face: $(this).face(),
-          reserved: $(this).hasClass("reserved")
+          reserved_by_sender: $(this).hasClass("reserved")
         };
       });
       return socket.emit('message', msg);
@@ -320,7 +320,7 @@
     _results = [];
     for (key in msg) {
       target = $(".card[data-id='" + key + "']");
-      if (msg[key].reserved) {
+      if (msg[key].reserved_by_sender) {
         _results.push(target.css("top", msg[key].offset.top).removeClass("reserved").addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).addClass("reserved-by-other").addClass("RID" + user.id).redraw());
       } else {
         _results.push(target.css("top", msg[key].offset.top).addClass("UID" + user.id).css("left", msg[key].offset.left).css("z-index", msg[key].z_index).data("face", msg[key].face).removeClass("reserved-by-other").removeClass("RID" + user.id).redraw());

@@ -23,7 +23,7 @@ $(document).ready ->
         offset: $(this).offset(),
         z_index: $(this).css("z-index"),
         face: $(this).face(),
-        reserved: $(this).hasClass("reserved")
+        reserved_by_sender: $(this).hasClass("reserved")
       }
     )
     socket.emit('message',msg)
@@ -135,7 +135,7 @@ $(document).ready ->
         else
           $(this).removeClass("semi-open")
           $(this).removeClass("ura")
-      #$(this).css "background-image", "url('./images/" + $(this).img() + ".gif')"
+
     flip: ->
       if $(this).hasClass("reserved-by-other")
         return
@@ -284,7 +284,7 @@ socket.on('message', (data) ->
   for key of msg
     target = $(".card[data-id='#{key}']")
 
-    if msg[key].reserved
+    if msg[key].reserved_by_sender
       target.css("top", msg[key].offset.top)
       .removeClass("reserved")
       .addClass("UID"+user.id)
@@ -293,6 +293,15 @@ socket.on('message', (data) ->
       .data("face",msg[key].face)
       .addClass("reserved-by-other")
       .addClass("RID"+user.id)
+      .redraw()
+    else if msg[key].reserved_by !== undefined && msg[key].reserved_by != 0
+      target.css("top", msg[key].offset.top)
+      .addClass("UID"+user.id)
+      .css("left", msg[key].offset.left)
+      .css("z-index", msg[key].z_index)
+      .data("face",msg[key].face)
+      .addClass("reserved-by-other")
+      .addClass("RID"+msg[key].reserved_by)
       .redraw()
     else
       target.css("top", msg[key].offset.top)
