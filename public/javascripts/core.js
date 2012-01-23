@@ -45,7 +45,10 @@
           reserved_by_sender: $(this).hasClass("reserved")
         };
       });
-      return socket.emit('message', msg);
+      socket.emit('message', msg);
+      return socket.emit('current_z_index', {
+        value: zIndex
+      });
     };
     unselect_all = function() {
       var unselected;
@@ -374,6 +377,10 @@
     $("#loading").text("" + data.user.name + " was disconnected.").slideDown(1000).slideUp(500);
     $(".UID" + user.id).removeClass("UID" + user.id).redraw();
     return $(".RID" + user.id).removeClass("RID" + user.id).removeClass("reserved-by-other").data("face", 0).redraw();
+  });
+
+  socket.on('current_z_index_refresh', function(data) {
+    return zIndex = data.value;
   });
 
   socket.on('init', function(data) {

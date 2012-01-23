@@ -11,8 +11,9 @@ var express = require('express')
 
 var app = module.exports = express.createServer();
 
-cards = {}
-users = {}
+cards = {};
+users = {};
+current_zIndex = 64;
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -100,6 +101,14 @@ io.sockets.on('connection', function(socket) {
       if(!cards[key]) cards[key] = {};
       cards[key].visual = data[key]["visual"];
     }
+  });
+
+  socket.on('current_z_index', function(data){
+    if(current_zIndex < data.value){
+      current_zIndex = data.value
+    }
+    console.log("z-index: " + current_zIndex);
+    socket.broadcast.emit('current_z_index_refresh', {value: current_zIndex});
   });
 
   socket.on('disconnect', function () {

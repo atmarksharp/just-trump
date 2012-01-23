@@ -27,6 +27,7 @@ $(document).ready ->
       }
     )
     socket.emit('message',msg)
+    socket.emit('current_z_index', {value: zIndex})
 
   unselect_all = ->
     unselected = {}
@@ -373,6 +374,9 @@ socket.on('user_disconnect', (data)->
   $(".RID#{user.id}").removeClass("RID#{user.id}").removeClass("reserved-by-other").data("face", 0).redraw()
 )
 
+socket.on('current_z_index_refresh', (data)->
+  zIndex = data.value
+)
 
 socket.on('init', (data)->
   msg = data.value
